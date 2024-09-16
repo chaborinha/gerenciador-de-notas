@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Note;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Gate;
 class NotesController extends Controller
 {
     /**
@@ -57,14 +56,18 @@ class NotesController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
-    {
-        $nota = Note::find($id);
-        if ($nota->user_id !== Auth::id()) {
-            return redirect()->route('dashboard')->with('error', 'Você não tem permissão para editar esta nota.');
-        }
+{
+    $nota = Note::find($id);
 
-        return view('nota.edit', compact('nota'));
-    }
+    // if (!$nota) {
+    //     return redirect()->route('dashboard')->with('error', 'Nota não encontrada!');
+    // }
+
+    Gate::authorize('update', $nota);
+
+    return view('nota.edit', compact('nota'));
+}
+
 
     /**
      * Update the specified resource in storage.
@@ -77,9 +80,10 @@ class NotesController extends Controller
         ]);
 
         $nota = Note::find($id);
-        if ($nota->user_id !== Auth::id()) {
-            return redirect()->route('dashboard')->with('error', 'Você não tem permissão para atualizar esta nota.');
+        if (!$nota) {
+            return redirect()->route('dashboard')->with('error', 'Nota não encontrada!');
         }
+       Gate::authorize('update', $nota);
         $nota->update($data);
           
         return redirect()->route('dashboard')->with('success', 'Nota atualizada com sucesso!'); 
@@ -92,9 +96,7 @@ class NotesController extends Controller
     public function destroy(string $id)
     {
         $nota = Note::find($id);
-        if ($nota->user_id !== Auth::id()) {
-            return redirect()->route('dashboard')->with('error', 'Você não tem permissão para deletar esta nota.');
-        }
+        Gate::authorize('delete', $nota);
         $nota->delete();
         return redirect()->route('dashboard')->with('success', 'Nota removida com sucesso!');
     }
